@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="android-sdk-1.2.6">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.android/build-cache/be55f0654d6150ef877385a290ed77aef6bb1adc/output/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.android/build-cache/be55f0654d6150ef877385a290ed77aef6bb1adc/output/res" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.instamojo/android-sdk/1.2.6/4879ebd1e09d3c552b2551ed8050ef65836c3136/android-sdk-1.2.6-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

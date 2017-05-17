@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.vitech.socmcompetition.StorySubmitActivity">
+<com.vitech.socmcompetition.NoTouchPager
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/main_pager"
+    android:visibility="visible"
+    ></com.vitech.socmcompetition.NoTouchPager>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/write_story_view"
+        android:visibility="gone"
+        >
+        <android.support.constraint.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <EditText
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="Story Title"
+                android:background="@android:color/transparent"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:layout_marginBottom="20dp"
+                android:id="@+id/story_title"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/story" />
+<WebView
+    android:layout_width="0dp"
+    android:id="@+id/story"
+    app:layout_constraintLeft_toLeftOf="parent"
+    app:layout_constraintRight_toRightOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/story_title"
+    app:layout_constraintBottom_toBottomOf="parent"
+    android:layout_height="wrap_content"></WebView>
+
+       </android.support.constraint.ConstraintLayout>
+
+
+    </ScrollView>
+
+    <android.support.constraint.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/final_view"
+        android:visibility="gone">
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:id="@+id/pay_stat"
+            android:layout_margin="60dp"
+            android:src="@drawable/ic_smiling_emoticon_square_face"
+            app:layout_constraintDimensionRatio="1"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@+id/pay_stat"
+            app:layout_constraintLeft_toLeftOf="parent"
+            android:id="@+id/message_state"
+            android:gravity="center"
+            android:layout_marginTop="20dp"
+            app:layout_constraintRight_toRightOf="parent"
+            android:textSize="24sp"
+            android:text="Payment Success !"
+            />
+
+    </android.support.constraint.ConstraintLayout>
+
+    <LinearLayout
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:gravity="center">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textColor="#ffffff"
+            android:textAllCaps="false"
+            android:id="@+id/button"
+            android:visibility="gone"
+            android:text="Next"
+            android:background="@drawable/fab_background" />
+    </LinearLayout>
+</RelativeLayout>

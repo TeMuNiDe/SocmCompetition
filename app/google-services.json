@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "600791915232",
+    "firebase_url": "https://socmcompetetion.firebaseio.com",
+    "project_id": "socmcompetetion",
+    "storage_bucket": "socmcompetetion.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:600791915232:android:5cf3d226ad6bcdaa",
+        "android_client_info": {
+          "package_name": "com.vitech.socmcompetition"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "600791915232-bsspbne3co3p6vlh7d68hi7oll6bqd9i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vitech.socmcompetition",
+            "certificate_hash": "96f277ac26cd4b76f71a1123218356b68a6386c0"
+          }
+        },
+        {
+          "client_id": "600791915232-rq4a1lq37tr0evufol5j95q3srdjkgg7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADd_EulWG7-X4wzh04IJNAVlnjXE41m70"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "600791915232-rq4a1lq37tr0evufol5j95q3srdjkgg7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
