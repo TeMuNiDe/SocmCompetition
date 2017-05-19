@@ -3,16 +3,23 @@
     <head>
         <meta charset="utf-8">
         <title>A Simple Page with CKEditor</title>
-      
+
         <script src="ckeditor.js"></script>
     </head>
     <body>
+
         <form>
             <textarea name="editor1" id="editor1" rows="10" cols="80">
                Write your story here..
             </textarea>
+
+          
             <script>
                                CKEDITOR.replace( 'editor1' );
+                               function getStory(){
+
+Storygrabber.getStoryContent(CKEDITOR.instances['editor1'].document.getBody().getText(),CKEDITOR.instances['editor1'].getData()) ;
+                               }
             </script>
         </form>
     </body>

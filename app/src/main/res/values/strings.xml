@@ -1,6 +1,4 @@
 <resources>
     <string name="app_name">Socm Competition</string>
-
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+<string name="payment_issue">Your Payment was Successful but there seems to be an error with network Connection. please reach for developer@storiesofcommonman.in to avail certificate \n Note down this Payment id for future reference :</string>
 </resources>

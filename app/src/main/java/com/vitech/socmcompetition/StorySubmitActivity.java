@@ -10,15 +10,18 @@ import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.webkit.ConsoleMessage;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.firebase.crash.FirebaseCrash;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
@@ -30,6 +33,7 @@ import com.instamojo.android.models.Order;
 import com.instamojo.android.network.Request;
 import org.json.JSONObject;
 import java.io.IOException;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
@@ -42,6 +46,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import static com.vitech.socmcompetition.StorySubmitActivity.NAV_STATE.NAV_END;
+import static com.vitech.socmcompetition.StorySubmitActivity.NAV_STATE.NAV_RETRY;
 import static com.vitech.socmcompetition.StorySubmitActivity.NAV_STATE.NAV_RULES_AND_REGULATIONS;
 import static com.vitech.socmcompetition.StorySubmitActivity.NAV_STATE.NAV_STORY;
 import static com.vitech.socmcompetition.StorySubmitActivity.NAV_STATE.NAV_T_AND_C;
@@ -60,10 +65,15 @@ ProgressDialog paymentDialog;
     Story underSubmission;
 Button next;
     ImageView payStatView;
+    EditText storyTitle;
+    WebView storyContent;
     View writeStory;
     TextView payStatText;
 
-
+enum FLAG_PAYMENT{
+    BEFORE_PAYMENT,AFTER_PAYMENT;
+}
+FLAG_PAYMENT flag_payment = FLAG_PAYMENT.BEFORE_PAYMENT;
     public class Story{
 
 String reference;
@@ -73,6 +83,8 @@ String reference;
         String transaction_status;
         String order_id;
         String payment_id;
+String title;
+        String content;
 
 
         public Story(String story_id, String transaction_id, String submission_status, String transaction_status, String order_id, String payment_id,String reference){
@@ -85,9 +97,7 @@ String reference;
             this.reference = reference;
 
         }
-
-
-        public Map<String,String> toMap(){
+             public Map<String,String> toMap(){
             Map<String,String> map = new HashMap<>();
             map.put("story_id",story_id);
             map.put("transaction_id",transaction_id);
@@ -103,7 +113,7 @@ String reference;
     }
 
     public enum NAV_STATE{
-       NAV_USER_DETAILS,NAV_T_AND_C,NAV_RULES_AND_REGULATIONS,NAV_STORY,NAV_END;
+       NAV_USER_DETAILS,NAV_T_AND_C,NAV_RULES_AND_REGULATIONS,NAV_STORY,NAV_END,NAV_RETRY;
     }
 
     NAV_STATE currentNav;
@@ -120,6 +130,8 @@ String reference;
         Instamojo.setBaseUrl("https://test.instamojo.com/");
         editor.loadUrl("file:///android_asset/ckeditor/index.html");
         writeStory = findViewById(R.id.write_story_view);
+        storyTitle = (EditText)findViewById(R.id.story_title);
+        storyContent = editor;
 mainPager = (NoTouchPager)findViewById(R.id.main_pager);
  adapter = new MainPageAdapter(getSupportFragmentManager());
   mainPager.setAdapter(adapter);
@@ -127,6 +139,32 @@ mainPager = (NoTouchPager)findViewById(R.id.main_pager);
 
         payStatView = (ImageView)findViewById(R.id.pay_stat);
         payStatText = (TextView)findViewById(R.id.message_state);
+
+
+        storyContent.addJavascriptInterface(new StoryGrabberInterface(new StoryObtainedListener() {
+            @Override
+            public void onStoryObtained(final String[] content) {
+
+                if(countWords(content[0])>=10){
+                    underSubmission.content = content[1];
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            submitStory(underSubmission);
+                        }
+                    });
+
+                }
+                else {
+                    Toast.makeText(getApplicationContext(),"Write at least 100 words",Toast.LENGTH_LONG).show();
+                }
+
+
+            }
+        }),"Storygrabber");
+
 
         new Handler().postDelayed(new Runnable() {
             @Override
@@ -148,8 +186,9 @@ mainPager = (NoTouchPager)findViewById(R.id.main_pager);
                     }break;
                     case NAV_T_AND_C:mainPager.setCurrentItem(3,true);currentNav = NAV_RULES_AND_REGULATIONS;next.setText("Next");break;
                     case NAV_RULES_AND_REGULATIONS:hidePagerAndShowStorySubmit();next.setText("Submit");currentNav = NAV_STORY;break;
-                    case NAV_STORY:createStory();next.setVisibility(View.GONE);currentNav=NAV_END;break;
-                    case NAV_END:startActivity(new Intent(getApplicationContext(),CertificateActivity.class).putExtra("name",uname));
+                    case NAV_STORY:createStory();break;
+                    case NAV_RETRY:retryDatabaseInsert(underSubmission);break;
+                    case NAV_END:startActivity(new Intent(getApplicationContext(),CertificateActivity.class).putExtra("name",uname).putExtra("story_id",underSubmission.story_id));
 
 
                 }
@@ -212,7 +251,7 @@ writeStory.startAnimation(showUp);
         String story_id = umail.replaceAll("\\W","_")+"_:"+id;
         String transaction_id = umail.replaceAll("\\W","_")+"_"+id;
         Story story = new Story(story_id,transaction_id,"created","created",null,null,uref);
-        submitStory(story);
+        buildStoryWithContent(story);
         Log.d("Story","Created");
 
     }
@@ -221,7 +260,6 @@ writeStory.startAnimation(showUp);
     void submitStory(final Story story) {
 
 Log.d("Story","Submitted");
-
         paymentDialog = new ProgressDialog(StorySubmitActivity.this);
         paymentDialog.setIndeterminate(false);
         paymentDialog.setMessage("Please Wait...");
@@ -310,10 +348,16 @@ Log.d("Story",story.toMap().toString());
         Order order = new Order(access_token,story.transaction_id,uname,fragment.email.getText().toString(),"8520926489","100","SOCM");
         Request request = new Request(order, new OrderRequestCallBack() {
             @Override
-            public void onFinish(Order order, Exception error) {
+            public void onFinish(Order order,final Exception error) {
 
                 if (error != null) {
-                     handleException(error);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            handleException(error);
+                        }
+                    });
+
                     return;
                 }
                underSubmission = story;
@@ -326,7 +370,6 @@ Log.d("Story",story.toMap().toString());
 
 
     void startPreCreatedUI(Order order){
-
         Intent intent = new Intent(getBaseContext(), PaymentDetailsActivity.class);
         intent.putExtra(Constants.ORDER, order);
         startActivityForResult(intent, Constants.REQUEST_CODE);
@@ -339,6 +382,8 @@ Log.d("Story",story.toMap().toString());
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        flag_payment = FLAG_PAYMENT.AFTER_PAYMENT;
         if (requestCode == Constants.REQUEST_CODE && data != null) {
             String orderID = data.getStringExtra(Constants.ORDER_ID);
             String transactionID = data.getStringExtra(Constants.TRANSACTION_ID);
@@ -427,12 +472,11 @@ if(payment.getString("status").equals("Credit")){
     }
 
 
-    void onPaymentSuccess(Story story){
-paymentDialog.cancel();
-
+    void onPaymentSuccess(final Story story){
+        paymentDialog.cancel();
         story.transaction_status="paid";
         story.submission_status="submitted";
-
+        final Story localStory  = story;
         database.getReference().child("submissions").child(story.story_id).setValue(story.toMap(), new DatabaseReference.CompletionListener() {
             @Override
             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
@@ -440,10 +484,13 @@ paymentDialog.cancel();
                     writeStory.setVisibility(View.GONE);
                     findViewById(R.id.final_view).setVisibility(View.VISIBLE);
                     next.setVisibility(View.VISIBLE);
+                    currentNav = NAV_END;
                     next.setText("Generate Certificate");
+
+                    underSubmission = story;
                 }
                 else {
-                   handleException(databaseError.toException());
+                   paymentSuccessButDatabaseError(databaseError,localStory);
                 }
             }
         });
@@ -453,52 +500,189 @@ class PaymentFailException extends Exception{}
 class NoInternetException extends Exception{}
 class ConnectionTimeoutException extends Exception{}
 class PaymentCancelledException extends Exception{}
+class PaymentSuccessButInsertionErrorException extends Exception{
+    Story story;
+    public PaymentSuccessButInsertionErrorException(Story story){
+        this.story = story;
+    }
+
+}
 
 
 
-void handleException(Exception e){
-    if(e instanceof NoInternetException){
-        Toast.makeText(getApplicationContext(),"Please Check your Network Connection",Toast.LENGTH_LONG).show();
-        return;
-    }
-    if(e instanceof ConnectionTimeoutException){
-        Toast.makeText(getApplicationContext(),"Please Check your Nerwork Connection",Toast.LENGTH_LONG).show();
-        return;
-    }
-    if(e instanceof PaymentCancelledException){
-      OnPaymentCancelled();
-        return;
-    }
-    if(e instanceof PaymentFailException){
-        OnPaymentCancelled();
-        return;
-    }
+void paymentSuccessButDatabaseError(DatabaseError error,Story local){
+    FirebaseCrash.report(error.toException());
+    writeStory.setVisibility(View.GONE);
+    findViewById(R.id.final_view).setVisibility(View.VISIBLE);
+    next.setVisibility(View.VISIBLE);
+    currentNav = NAV_RETRY;
+    underSubmission= local;
+    next.setText("Generate Certificate");
+}
 
-    if(e instanceof UnknownHostException){
-        handleException(new NoInternetException());
-        return;
-    }
-    if(e instanceof SocketTimeoutException){
-        handleException(new ConnectionTimeoutException());
-        return;
-    }
-    else {
-        Toast.makeText(getApplicationContext(),"UnKnown Error Occcurred",Toast.LENGTH_LONG).show();
-        FirebaseCrash.report(e);
-        return;
-    }
+void retryDatabaseInsert(final Story story){
+    database.getReference().child("submissions").child(story.story_id).setValue(story.toMap(), new DatabaseReference.CompletionListener() {
+        @Override
+        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+            if(databaseError==null){
+                startActivity(new Intent(getApplicationContext(),CertificateActivity.class).putExtra("name",uname).putExtra("story_id",story.story_id));
+            }
+            else {
+               handleException(new PaymentSuccessButInsertionErrorException(story));
+            }
+        }
+    });
+
+}
+
+
+
+void handleException(final  Exception e){
+    runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+            if(e instanceof PaymentSuccessButInsertionErrorException){
+                PaymentSuccessButInsertionErrorException exception = (PaymentSuccessButInsertionErrorException)e;
+                writeStory.setVisibility(View.GONE);
+                findViewById(R.id.final_view).setVisibility(View.VISIBLE);
+                payStatView.setImageResource(R.drawable.ic_sad);
+                payStatText.setText(getResources().getString(R.string.payment_issue)+exception.story.payment_id);
+                return;
+            }
+            if(e instanceof NoInternetException){
+                Toast.makeText(getApplicationContext(),"Please Check your Network Connection",Toast.LENGTH_LONG).show();
+                switch (flag_payment){
+                    case AFTER_PAYMENT:OnPaymentCancelled();
+
+                }
+                return;
+            }
+            if(e instanceof ConnectionTimeoutException){
+                Toast.makeText(getApplicationContext(),"Please Check your Network Connection",Toast.LENGTH_LONG).show();
+                switch (flag_payment){
+                    case AFTER_PAYMENT:OnPaymentCancelled();
+
+                }                return;
+            }
+            if(e instanceof PaymentCancelledException){
+                OnPaymentCancelled();
+                return;
+            }
+            if(e instanceof PaymentFailException){
+                OnPaymentCancelled();
+                return;
+            }
+
+            if(e instanceof UnknownHostException){
+                handleException(new NoInternetException());
+                return;
+            }
+            if(e instanceof SocketTimeoutException){
+                handleException(new ConnectionTimeoutException());
+                return;
+            }
+            if(e instanceof SocketException){
+                handleException(new NoInternetException());
+                return;
+            }
+            else {
+                Toast.makeText(getApplicationContext(),"UnKnown Error Occcurred",Toast.LENGTH_LONG).show();
+                OnPaymentCancelled();
+                FirebaseCrash.report(e);
+                return;
+            }
+
+
+        }
+    });
 
 
 }
 
 void OnPaymentCancelled(){
+
 paymentDialog.cancel();
 payStatView.setImageResource(R.drawable.ic_sad);
     payStatText.setText("Payment Failed..!");
     writeStory.setVisibility(View.GONE);
+    next.setVisibility(View.GONE);
     findViewById(R.id.final_view).setVisibility(View.VISIBLE);
 
 
     }
+
+  void buildStoryWithContent(Story story){
+      story.title = storyTitle.getText().toString();
+      underSubmission = story;
+
+     storyContent.setWebChromeClient(new WebChromeClient(){
+          @Override
+          public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+              Log.d("console_message",consoleMessage.message()+":::"+consoleMessage.lineNumber());
+              return super.onConsoleMessage(consoleMessage);
+          }
+      });
+storyContent.loadUrl("javascript:getStory()");
+  }
+
+
+
+
+
+class StoryGrabberInterface{
+StoryObtainedListener listener;
+
+    public StoryGrabberInterface(StoryObtainedListener listener){
+        this.listener = listener;
     }
+
+     @JavascriptInterface
+    public void getStoryContent(String text,String html){
+         Log.d("JAVASCRIPT","Working");
+         listener.onStoryObtained(new String[]{text,html});
+
+    }
+
+
+}
+    public interface StoryObtainedListener {
+        void onStoryObtained(String[] content);
+    }
+
+
+    public int countWords(String s){
+
+        int wordCount = 0;
+
+        boolean word = false;
+        int endOfLine = s.length() - 1;
+
+        for (int i = 0; i < s.length(); i++) {
+
+            if (Character.isLetter(s.charAt(i)) && i != endOfLine) {
+                word = true;
+                          } else if (!Character.isLetter(s.charAt(i)) && word) {
+                wordCount++;
+                word = false;
+
+            } else if (Character.isLetter(s.charAt(i)) && i == endOfLine) {
+                wordCount++;
+            }
+        }
+        return wordCount;
+    }
+
+    void uploadStory(Story story){
+      OkHttpClient client = new OkHttpClient();
+
+
+
+
+
+    }
+
+
+
+
+}
 
