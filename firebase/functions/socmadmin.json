@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "socmcompetetion",
+  "private_key_id": "753d40f082b0f431b3d645c2169ba3a6598e1e82",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQC87IDejGCW6bOh\nDx8KqWy3+1oZsmowxmt7nzRZ8SmWFeII31g3lC0wQ2OauRNuGnDEIxB2TyxozC15\nQk6kyWZ/RVRDLtNjWop3GIxrjE4YRKrJcl5cdNYUmIVPM1+pNEh/YAGfX4oRRMVG\nldRtdn0UmR1b3R18879rJpdOQ9SxZeeOTmH97sYJuvv4zLZjtsfwRBpB3vGdIYan\nJjBefu9amwPT4RhxhaS8kFmOBwd8bgOyiIDSagilpwtsUjUPBEQ4EZMfWcK1CVmj\n0VpOybpWQvKXzMfsgEXgScvxtuQHvk2kRWD+n1JtZgyQKtULz2ccS61mKMZluG6Q\nZDMqI9w/AgMBAAECgf8dJmC79ezxXB3bO/oOKxYbTS0Zye2YmQT8jhQFzLAd+EJo\nHA4AhVxzlfJIbUYSNwIvQTnJB25SvS5HB3Qa+PhXqtrVguQa8F1tAtynu35RQEcZ\nzgvBOEXP57ip/8NC2E5XWPjnHlavU20c9wFP4nhqNTXSdsuV/AYNAmdWLCElPdAQ\nM1oJRj1Jc29mnQvjJdixlT1mQcplF87VrxWZWb3gRFQbMQHditvFgJ3au8K0Bse1\nRNLX0XNyhYZRXYbum9fOjqm5UH27Cg7jZgBCLAegoX5SxNFywOPPlS2NTALxomPB\nsDC7GQs/bezJ8FQprU78SjpOIgdEbzP4sum+sl0CgYEA5TEjIjTg/UkD309EV5KJ\nd/ySUOIXTIg2AWnRnHYYrJUbsYrhQBYzR4RW5a/Sz8sELOAhxvpVNuLRmU3m6R2f\nq2AxCcy+7Y14jKomCZ/9AsJhB/TRRUsdOhaWtIMC4aj38qpibEjQszzjgwFghldf\nzwyNP+YPb1io8f9nFDTxEAUCgYEA0wWWvKFZxR103NAaiPBSrvQm4Cvzx74uQahR\n3JsMjxM2tFKXac+oaCWu1gLSQdMy28hczI/fENmx+0LHCTSQLnQRVuSS9USIcrXm\nXKC3Z91fgzzTtRJXIg3tfkF/v//a4Is0T/f9ctK1RBfGTgvkcB9O3k0nYWtGxHez\nVmklInMCgYBeN2XnAO/gj2xtF0vT6CRk08peP6MuTexNhm+prw6Tm7RHtvzD+JxZ\n8Pg78Zxq2V09CWI5Rt1S88kQCWs8N3ZU3/UovydZxkdhI+0BFejPgpKaz7RblPZN\n081eJWFA3NIYypwtQX2xwP0R9LX2Y+K53cIPG4cK0dqZqNF6CA109QKBgC84O++/\nxz+1hLX4l0d3R3lAxwY4r5dNtjoY+SB9TYUijoYxSRJzVkLf08yt2vDB2sqVfjaE\nJy01GX+ZBMLJkU3jyRGBmmTpzgKlM4Qcro2+WqYaUWFeVkMXjMJI09ZZ4VeHrtAK\nNRuhjNBM5aIHRTnVt6dE6oABKlfCVU4LvzSDAoGBAJjYvpTcU9GHy4JIzJWkMHn7\nKcRhWrh38X2FRdiitXZoygiHyGmc/JfkwoxgL+iqiGnU2tn6OytMPmajSlItvcBa\nn5o1ULdyaF6wl/1HwCIoIDeLpIKI1jTOPnrDxC6QdVUvwCxcXzGSiSivwaE0tAhg\nbH1KW/epOFjsQN9qxrst\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-3c7xw@socmcompetetion.iam.gserviceaccount.com",
+  "client_id": "103632208650661952148",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://accounts.google.com/o/oauth2/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-3c7xw%40socmcompetetion.iam.gserviceaccount.com"
+}

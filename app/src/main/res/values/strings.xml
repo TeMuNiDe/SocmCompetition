@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">Socm Competition</string>
 <string name="payment_issue">Your Payment was Successful but there seems to be an error with network Connection. please reach for developer@storiesofcommonman.in to avail certificate \n Note down this Payment id for future reference :</string>
+<string name="certificate_part_1">Mr./Ms </string>
+<string name="certificate_part_2">for participating in the Literary Event</string>
+<string name="certificate_event">\"Most Inspiring Story\"</string>
+<string name="certificate_end">conducted by</string>
+
 </resources>

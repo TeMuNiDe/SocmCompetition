@@ -88,3 +88,9 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+firebase/functions/node_modules/*
+/*.jpg
+*.jar
+app/*.psd
+app/*.jpg
+

@@ -3,9 +3,11 @@ package com.vitech.socmcompetition;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Handler;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.Animation;
@@ -33,6 +35,7 @@ import com.instamojo.android.models.Order;
 import com.instamojo.android.network.Request;
 import org.json.JSONObject;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -41,9 +44,11 @@ import java.util.Map;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+
 
 import static com.vitech.socmcompetition.StorySubmitActivity.NAV_STATE.NAV_END;
 import static com.vitech.socmcompetition.StorySubmitActivity.NAV_STATE.NAV_RETRY;
@@ -55,17 +60,21 @@ import static com.vitech.socmcompetition.StorySubmitActivity.NAV_STATE.NAV_USER_
 
 public class StorySubmitActivity extends AppCompatActivity {
 
+    public static final MediaType JSON    = MediaType.parse("application/json; charset=utf-8");
+    public static final MediaType TEXT    = MediaType.parse("text/plain; charset=utf-8");
+
 NoTouchPager mainPager;
  MainPageAdapter adapter;
-    String uname = "NO_NAME",umail = "NO_EMAIL",uref="NO_REF";
+    String uname = "NO_NAME",umail = "NO_EMAIL",uref="NO_REF",uphone="0000000000",college = " ";
     UserDetailsFragment fragment;
-ProgressDialog paymentDialog;
+    ProgressDialog paymentDialog;
     String clientID,clientSecret,api_key,auth_token;
     FirebaseDatabase database;
     Story underSubmission;
-Button next;
+    Button next;
     ImageView payStatView;
     EditText storyTitle;
+    AlertDialog.Builder prompt;
     WebView storyContent;
     View writeStory;
     TextView payStatText;
@@ -126,7 +135,9 @@ String title;
         editor.getSettings().setJavaScriptEnabled(true);
         editor.getSettings().setDomStorageEnabled(true);
         editor.getSettings().setLightTouchEnabled(true);
+        editor.getSettings().setUseWideViewPort(true);
 
+        prompt = new AlertDialog.Builder(this);
         Instamojo.setBaseUrl("https://test.instamojo.com/");
         editor.loadUrl("file:///android_asset/ckeditor/index.html");
         writeStory = findViewById(R.id.write_story_view);
@@ -145,23 +156,21 @@ mainPager = (NoTouchPager)findViewById(R.id.main_pager);
             @Override
             public void onStoryObtained(final String[] content) {
 
+
                 if(countWords(content[0])>=10){
                     underSubmission.content = content[1];
 
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-
-                            submitStory(underSubmission);
+                            uploadStory(underSubmission);
                         }
                     });
-
                 }
                 else {
-                    Toast.makeText(getApplicationContext(),"Write at least 100 words",Toast.LENGTH_LONG).show();
+                   prompt.setMessage("Write atleast 100 words").show();
+
                 }
-
-
             }
         }),"Storygrabber");
 
@@ -172,25 +181,25 @@ mainPager = (NoTouchPager)findViewById(R.id.main_pager);
                 mainPager.setCurrentItem(1);
                 next.setVisibility(View.VISIBLE);
             }
-        },1000);
+        },2000);
 
-
-               next.setOnClickListener(new View.OnClickListener() {
+        next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 switch (currentNav){
                     case NAV_USER_DETAILS:if(verifyUserInput()){
                         mainPager.setCurrentItem(2,true);
                         currentNav = NAV_T_AND_C;
-                        next.setText("Next");
-                    }break;
+                                            }else {
+                        prompt.setMessage("Invalid Details...!");
+                        prompt.show();
+                    }
+                    break;
                     case NAV_T_AND_C:mainPager.setCurrentItem(3,true);currentNav = NAV_RULES_AND_REGULATIONS;next.setText("Next");break;
                     case NAV_RULES_AND_REGULATIONS:hidePagerAndShowStorySubmit();next.setText("Submit");currentNav = NAV_STORY;break;
                     case NAV_STORY:createStory();break;
                     case NAV_RETRY:retryDatabaseInsert(underSubmission);break;
-                    case NAV_END:startActivity(new Intent(getApplicationContext(),CertificateActivity.class).putExtra("name",uname).putExtra("story_id",underSubmission.story_id));
-
-
+                    case NAV_END:startActivity(new Intent(getApplicationContext(),CertificateActivity.class).putExtra("name",uname).putExtra("story_id",underSubmission.story_id).putExtra("college",college));
                 }
 
             }
@@ -201,17 +210,30 @@ mainPager = (NoTouchPager)findViewById(R.id.main_pager);
 
         fragment =(UserDetailsFragment) adapter.fragmentMap.get(1);
 
-        if(fragment.name.getText().toString().equals("")||fragment.email.getText().toString().equals("")){
+        if(fragment.name.getText().toString().equals("")||fragment.email.getText().toString().equals("")||fragment.phone.getText().toString().length()<10||fragment.college.getText().toString().equals("")){
             return false;
         }
         else {
+
             uname = fragment.name.getText().toString();
 umail = fragment.email.getText().toString();
             uref = fragment.reference.getText().toString();
+            uphone = fragment.phone.getText().toString();
+            college = fragment.college.getText().toString();
+if(isValidEmail(umail)){
+    Log.d("email","valid");
+    return true;
+}
+else{
+    return false;
+}
 
-
-            return true;
         }
+    }
+    boolean isValidEmail(String email){
+
+
+        return EmailValidator.getInstance().isValid(email);
     }
     void hidePagerAndShowStorySubmit(){
 
@@ -259,13 +281,6 @@ writeStory.startAnimation(showUp);
 
     void submitStory(final Story story) {
 
-Log.d("Story","Submitted");
-        paymentDialog = new ProgressDialog(StorySubmitActivity.this);
-        paymentDialog.setIndeterminate(false);
-        paymentDialog.setMessage("Please Wait...");
-        paymentDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        paymentDialog.setCancelable(false);
-        paymentDialog.show();
         database =  FirebaseDatabase.getInstance();
         database.getReference("test_client_id").addListenerForSingleValueEvent(new ValueEventListener() {
     @Override
@@ -345,7 +360,7 @@ Log.d("Access Token",object.getString("access_token"));
     void startPayment(String access_token, final Story story){
 
 Log.d("Story",story.toMap().toString());
-        Order order = new Order(access_token,story.transaction_id,uname,fragment.email.getText().toString(),"8520926489","100","SOCM");
+        Order order = new Order(access_token,story.transaction_id,uname,fragment.email.getText().toString(),uphone,"100","SOCM");
         Request request = new Request(order, new OrderRequestCallBack() {
             @Override
             public void onFinish(Order order,final Exception error) {
@@ -396,7 +411,7 @@ Log.d("Story",story.toMap().toString());
                 postPaymentJob(underSubmission);
                 String ord  = "Order ID:"+orderID+":::TRANS:"+transactionID+"::::PAYID :"+paymentID;
                 Log.d("order",ord);
-                Toast.makeText(getApplicationContext(),"Order ID:"+orderID+":::TRANS:"+transactionID+"::::PAYID :"+paymentID,Toast.LENGTH_LONG).show();
+              //  Toast.makeText(getApplicationContext(),"Order ID:"+orderID+":::TRANS:"+transactionID+"::::PAYID :"+paymentID,Toast.LENGTH_LONG).show();
 
 
             } else {
@@ -473,28 +488,43 @@ if(payment.getString("status").equals("Credit")){
 
 
     void onPaymentSuccess(final Story story){
-        paymentDialog.cancel();
+
         story.transaction_status="paid";
         story.submission_status="submitted";
         final Story localStory  = story;
-        database.getReference().child("submissions").child(story.story_id).setValue(story.toMap(), new DatabaseReference.CompletionListener() {
+     OkHttpClient client = new OkHttpClient();
+        RequestBody body = RequestBody.create(TEXT,new JSONObject(localStory.toMap()).toString());
+        okhttp3.Request request = new okhttp3.Request.Builder().addHeader("address",story.story_id).addHeader("Content-Type","text/plain").post(body).url("https://socmcompetetion.firebaseapp.com/addToDatabase").build();
+client.newCall(request).enqueue(new Callback() {
+    @Override
+    public void onFailure(Call call,final IOException e) {
+        runOnUiThread(new Runnable() {
             @Override
-            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                if(databaseError==null){
-                    writeStory.setVisibility(View.GONE);
-                    findViewById(R.id.final_view).setVisibility(View.VISIBLE);
-                    next.setVisibility(View.VISIBLE);
-                    currentNav = NAV_END;
-                    next.setText("Generate Certificate");
-
-                    underSubmission = story;
-                }
-                else {
-                   paymentSuccessButDatabaseError(databaseError,localStory);
-                }
+            public void run() {
+                paymentSuccessButDatabaseError(e,story);
             }
         });
 
+    }
+
+    @Override
+    public void onResponse(Call call, Response response) throws IOException {
+if(response.code()==200){
+    underSubmission= story;
+    runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+            showSuccessFull();
+        }
+    });
+
+}
+else {
+
+    paymentSuccessButDatabaseError(new Exception(),story);
+}
+    }
+});
     }
 class PaymentFailException extends Exception{}
 class NoInternetException extends Exception{}
@@ -508,32 +538,75 @@ class PaymentSuccessButInsertionErrorException extends Exception{
 
 }
 
-
-
-void paymentSuccessButDatabaseError(DatabaseError error,Story local){
-    FirebaseCrash.report(error.toException());
+void showSuccessFull(){
+    paymentDialog.cancel();
     writeStory.setVisibility(View.GONE);
     findViewById(R.id.final_view).setVisibility(View.VISIBLE);
     next.setVisibility(View.VISIBLE);
-    currentNav = NAV_RETRY;
-    underSubmission= local;
+    currentNav = NAV_END;
+
     next.setText("Generate Certificate");
 }
 
-void retryDatabaseInsert(final Story story){
-    database.getReference().child("submissions").child(story.story_id).setValue(story.toMap(), new DatabaseReference.CompletionListener() {
+
+
+void paymentSuccessButDatabaseError(Exception error,final Story local){
+    FirebaseCrash.report(error);
+    runOnUiThread(new Runnable() {
         @Override
-        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-            if(databaseError==null){
-                startActivity(new Intent(getApplicationContext(),CertificateActivity.class).putExtra("name",uname).putExtra("story_id",story.story_id));
-            }
-            else {
-               handleException(new PaymentSuccessButInsertionErrorException(story));
-            }
+        public void run() {
+            paymentDialog.cancel();
+
+            writeStory.setVisibility(View.GONE);
+            findViewById(R.id.final_view).setVisibility(View.VISIBLE);
+            next.setVisibility(View.VISIBLE);
+            currentNav = NAV_RETRY;
+            underSubmission= local;
+            next.setText("Generate Certificate");
         }
     });
 
 }
+
+void retryDatabaseInsert(final Story story){
+    paymentDialog.show();
+    OkHttpClient client = new OkHttpClient();
+
+    RequestBody body = RequestBody.create(TEXT,new JSONObject(story.toMap()).toString());
+    okhttp3.Request request = new okhttp3.Request.Builder().addHeader("address",story.story_id).addHeader("Content-Type","text/plain").post(body).url("https://socmcompetetion.firebaseapp.com/addToDatabase").build();
+    client.newCall(request).enqueue(new Callback() {
+
+        @Override
+        public void onResponse(Call call, Response response) throws IOException {
+            if (response.code() == 200) {
+                underSubmission = story;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                    startActivity(new Intent(getApplicationContext(),CertificateActivity.class).putExtra("name",uname).putExtra("story_id",underSubmission.story_id).putExtra("college",college));
+
+                    }
+                });
+
+            } else {
+
+                handleException(new PaymentSuccessButInsertionErrorException(story));
+            }
+        }
+
+        @Override
+        public void onFailure(Call call, final IOException e) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    handleException(new PaymentSuccessButInsertionErrorException(story));
+                }
+            });
+
+        }
+    });
+}
+
 
 
 
@@ -542,10 +615,13 @@ void handleException(final  Exception e){
         @Override
         public void run() {
             if(e instanceof PaymentSuccessButInsertionErrorException){
+                paymentDialog.cancel();
+
                 PaymentSuccessButInsertionErrorException exception = (PaymentSuccessButInsertionErrorException)e;
                 writeStory.setVisibility(View.GONE);
                 findViewById(R.id.final_view).setVisibility(View.VISIBLE);
                 payStatView.setImageResource(R.drawable.ic_sad);
+                payStatText.setTextSize(TypedValue.COMPLEX_UNIT_SP,15);
                 payStatText.setText(getResources().getString(R.string.payment_issue)+exception.story.payment_id);
                 return;
             }
@@ -612,8 +688,10 @@ payStatView.setImageResource(R.drawable.ic_sad);
     }
 
   void buildStoryWithContent(Story story){
+
       story.title = storyTitle.getText().toString();
       underSubmission = story;
+
 
      storyContent.setWebChromeClient(new WebChromeClient(){
           @Override
@@ -622,7 +700,15 @@ payStatView.setImageResource(R.drawable.ic_sad);
               return super.onConsoleMessage(consoleMessage);
           }
       });
-storyContent.loadUrl("javascript:getStory()");
+
+
+
+      if(story.title.equals("")){
+          prompt.setMessage("Empty title").show();
+      }
+      else {
+          storyContent.loadUrl("javascript:getStory()");
+      }
   }
 
 
@@ -672,17 +758,45 @@ StoryObtainedListener listener;
         return wordCount;
     }
 
-    void uploadStory(Story story){
+    void uploadStory(final Story story){
       OkHttpClient client = new OkHttpClient();
 
+        Log.d("Story","Submitted");
+        paymentDialog = new ProgressDialog(StorySubmitActivity.this);
+        paymentDialog.setIndeterminate(false);
+        paymentDialog.setMessage("Please Wait...");
+        paymentDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        paymentDialog.setCancelable(false);
+        paymentDialog.show();
 
+        RequestBody body = RequestBody.create(JSON,buildPost(story.title,story.content,uname+","+umail,story.story_id));
+        okhttp3.Request post = new okhttp3.Request.Builder().addHeader("Authorization", " Basic c3Rvcmllc29mY29tbW9ubWFuOndldHQgY1RpeCBDQkpaIFVrTUkgRGRVNiBINkNG").addHeader("Content-Type","application/json").url("http://storiesofcommonman.azurewebsites.net/wp-json/wp/v2/posts").post(body).build();
 
+        client.newCall(post).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                handleException(e);
+            }
 
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+if(response.code()== HttpURLConnection.HTTP_CREATED){
 
+    submitStory(story);
+
+}}
+        });
     }
-
-
-
+  String buildPost(String title,String data,String author,String id){
+        JSONObject object = new JSONObject();
+        String content  = data +"\n\n\nBy : \t"+author;
+        try {
+            object.put("author","1").put("title",title+"("+id+")").put("content",content);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return object.toString();
+    }
 
 }
 

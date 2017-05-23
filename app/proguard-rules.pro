@@ -12,9 +12,10 @@
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
 # class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+-keepclassmembers class com.vitech.socmcompetition.StorySubmitActivity$StoryGrabberInterface{
+   public *;
+}
+-keepattributes StoryGrabberInterface
 
 # Uncomment this to preserve the line number information for
 # debugging stack traces.
@@ -24,3 +25,16 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 -keep class com.instamojo.android.**{*;}
+-keeppackagenames org.jsoup.nodes
+-keep class com.squareup.okhttp.*{ *; }
+-dontwarn com.squareup.okhttp.**
+-keep class java.nio.file.*{ *; }
+-dontwarn java.nio.file.**
+-keep class org.codehaus.mojo.animal_sniffer.*{ *; }
+-dontwarn org.codehaus.mojo.animal_sniffer.**
+-keep class org.spongycastle.** { *; }
+-dontwarn org.spongycastle.**
+-keep class javax.xml.crypto.**{*;}
+-dontwarn javax.xml.crypto.**
+-keep class org.apache.**{*;}
+-dontwarn org.apache.**

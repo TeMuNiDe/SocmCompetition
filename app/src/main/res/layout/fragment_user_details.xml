@@ -4,31 +4,73 @@
     android:layout_height="match_parent"
     tools:context="com.vitech.socmcompetition.UserDetailsFragment">
 
-<LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
-    <EditText
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Name"
-        android:id="@+id/user_name"
-        android:textSize="24sp"
-        />
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Email"
-        android:id="@+id/user_email"
-        android:textSize="24sp"
-        />
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Reference"
-        android:id="@+id/user_reference"
-        android:textSize="24sp"
-        />
+        android:divider="@android:color/transparent"
+        android:dividerPadding="50dp"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:showDividers="middle">
 
-</LinearLayout>
+        <EditText
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:id="@+id/user_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:hint="Name"
+            android:inputType="textPersonName"
+            android:lines="1"
+            android:textSize="24sp" />
+
+        <EditText
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:id="@+id/user_email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:hint="Email"
+            android:inputType="textEmailAddress"
+            android:lines="1"
+            android:textSize="24sp" />
+
+        <EditText
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:id="@+id/user_phone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:hint="10 digit Phone Number"
+            android:inputType="phone"
+            android:lines="1"
+            android:maxLength="10"
+            android:textSize="24sp" />
+        <EditText
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:id="@+id/user_college"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:hint="College"
+            android:inputType="textPersonName"
+            android:textSize="24sp" />
+
+        <EditText
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:id="@+id/user_reference"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:hint="Reference"
+            android:inputType="textPersonName"
+            android:textSize="24sp" />
+
+
+    </LinearLayout>
 </FrameLayout>
