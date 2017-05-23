@@ -24,7 +24,6 @@ import android.widget.Toast;
 import com.google.firebase.crash.FirebaseCrash;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.instamojo.android.Instamojo;
@@ -79,9 +78,21 @@ NoTouchPager mainPager;
     View writeStory;
     TextView payStatText;
 
+    String client_id_ref = "";
+    String client_secret_ref = "";
+    String api_key_ref = "";
+    String auth_token_ref ="";
+    String access_token_url  ="";
+    String payment_url = "";
+    String payment_amount = "";
+    int min_lines =0;
 enum FLAG_PAYMENT{
     BEFORE_PAYMENT,AFTER_PAYMENT;
 }
+enum PAYMENT_TARGET{
+    TARGET_TEST,TARGET_RELEASE,TARGET_PAYMENT_TEST;
+}
+PAYMENT_TARGET target = PAYMENT_TARGET.TARGET_TEST;
 FLAG_PAYMENT flag_payment = FLAG_PAYMENT.BEFORE_PAYMENT;
     public class Story{
 
@@ -138,7 +149,38 @@ String title;
         editor.getSettings().setUseWideViewPort(true);
 
         prompt = new AlertDialog.Builder(this);
-        Instamojo.setBaseUrl("https://test.instamojo.com/");
+        switch (target){
+            case TARGET_TEST:Instamojo.setBaseUrl("https://test.instamojo.com/");
+                client_id_ref="test_client_id";
+                client_secret_ref = "test_client_secret";
+                api_key_ref = "test_api_key";
+                auth_token_ref = "test_auth_token";
+                payment_url = "https://test.instamojo.com/api/1.1/payments/";
+                access_token_url = "https://test.instamojo.com/oauth2/token/";
+                payment_amount = "100";
+                min_lines=10;
+                break;
+            case TARGET_RELEASE: client_id_ref="client_id_socm";
+                client_secret_ref = "client_secret_socm";
+                api_key_ref = "api_key_socm";
+                auth_token_ref = "auth_token_socm";
+                payment_url = "https://www.instamojo.com/api/1.1/payments/";
+                access_token_url = "https://www.instamojo.com/oauth2/token/";
+                payment_amount = "100";
+                min_lines  = 100;
+                break;
+            case TARGET_PAYMENT_TEST: client_id_ref="client_id";
+                client_secret_ref = "client_secret";
+                api_key_ref = "api_key";
+                auth_token_ref = "auth_token";
+                payment_url = "https://www.instamojo.com/api/1.1/payments/";
+                access_token_url = "https://www.instamojo.com/oauth2/token/";
+                payment_amount = "10";
+                min_lines=10;
+                break;
+
+        }
+
         editor.loadUrl("file:///android_asset/ckeditor/index.html");
         writeStory = findViewById(R.id.write_story_view);
         storyTitle = (EditText)findViewById(R.id.story_title);
@@ -157,7 +199,7 @@ mainPager = (NoTouchPager)findViewById(R.id.main_pager);
             public void onStoryObtained(final String[] content) {
 
 
-                if(countWords(content[0])>=10){
+                if(countWords(content[0])>=min_lines){
                     underSubmission.content = content[1];
 
                     runOnUiThread(new Runnable() {
@@ -282,18 +324,18 @@ writeStory.startAnimation(showUp);
     void submitStory(final Story story) {
 
         database =  FirebaseDatabase.getInstance();
-        database.getReference("test_client_id").addListenerForSingleValueEvent(new ValueEventListener() {
+        database.getReference(client_id_ref).addListenerForSingleValueEvent(new ValueEventListener() {
     @Override
     public void onDataChange(DataSnapshot dataSnapshot) {
 
         clientID =  (String) dataSnapshot.getValue();
 
-        Log.d("ClientID",clientID);
-        database.getReference("test_client_secret").addListenerForSingleValueEvent(new ValueEventListener() {
+
+        database.getReference(client_secret_ref).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 clientSecret  = (String)dataSnapshot.getValue();
-                Log.d("ClientSecret",clientSecret);
+
                 getAccessToken(story);
             }
 
@@ -326,7 +368,7 @@ databaseError.toException().printStackTrace();
         RequestBody body = new FormBody.Builder().addEncoded("client_id",clientID).addEncoded("client_secret",clientSecret).addEncoded("grant_type", "client_credentials").build();
 
         try{
-            okhttp3.Request request = new okhttp3.Request.Builder().addHeader("content-type","application/x-www-form-urlencoded").url("https://test.instamojo.com/oauth2/token/").post(body).build();
+            okhttp3.Request request = new okhttp3.Request.Builder().addHeader("content-type","application/x-www-form-urlencoded").url(access_token_url).post(body).build();
             client.newCall(request).enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
@@ -338,7 +380,6 @@ handleException(e);
                     try {
                         JSONObject object = new JSONObject(response.body().string());
                         startPayment(object.getString("access_token"),story);
-Log.d("Access Token",object.getString("access_token"));
 
                     }catch (Exception e){
                         e.printStackTrace();
@@ -360,7 +401,7 @@ Log.d("Access Token",object.getString("access_token"));
     void startPayment(String access_token, final Story story){
 
 Log.d("Story",story.toMap().toString());
-        Order order = new Order(access_token,story.transaction_id,uname,fragment.email.getText().toString(),uphone,"100","SOCM");
+        Order order = new Order(access_token,story.transaction_id,uname,fragment.email.getText().toString(),uphone,payment_amount,"SOCM");
         Request request = new Request(order, new OrderRequestCallBack() {
             @Override
             public void onFinish(Order order,final Exception error) {
@@ -409,8 +450,7 @@ Log.d("Story",story.toMap().toString());
                 underSubmission.order_id = orderID;
 
                 postPaymentJob(underSubmission);
-                String ord  = "Order ID:"+orderID+":::TRANS:"+transactionID+"::::PAYID :"+paymentID;
-                Log.d("order",ord);
+
               //  Toast.makeText(getApplicationContext(),"Order ID:"+orderID+":::TRANS:"+transactionID+"::::PAYID :"+paymentID,Toast.LENGTH_LONG).show();
 
 
@@ -424,17 +464,15 @@ handleException(new PaymentCancelledException());
 
         Log.d("post_payment","started");
 
-        database.getReference("test_api_key").addListenerForSingleValueEvent(new ValueEventListener() {
+        database.getReference(api_key_ref).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 api_key = (String) dataSnapshot.getValue();
-Log.d("api_key",api_key);
 
-                database.getReference("test_auth_token").addListenerForSingleValueEvent(new ValueEventListener() {
+                database.getReference(auth_token_ref).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         auth_token = (String)dataSnapshot.getValue();
-                        Log.d("auth_token",auth_token);
 validatePayment(auth_token,api_key,story);
                     }
 
@@ -456,7 +494,7 @@ handleException(databaseError.toException());
 
         //Log.d("Validating",story.payment_id+"::Auth"+auth_token+"::Key"+api_key);
         OkHttpClient client = new OkHttpClient();
-      okhttp3.Request request = new okhttp3.Request.Builder().url("https://test.instamojo.com/api/1.1/payments/"+story.payment_id+"/").addHeader("X-Api-Key",api_key).addHeader("X-Auth-Token",auth_token).get().build();
+      okhttp3.Request request = new okhttp3.Request.Builder().url(payment_url+story.payment_id+"/").addHeader("X-Api-Key",api_key).addHeader("X-Auth-Token",auth_token).get().build();
    client.newCall(request).enqueue(new Callback() {
        @Override
        public void onFailure(Call call, IOException e) {
