@@ -47,8 +47,6 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-
-
 import static com.vitech.socmcompetition.StorySubmitActivity.NAV_STATE.NAV_END;
 import static com.vitech.socmcompetition.StorySubmitActivity.NAV_STATE.NAV_RETRY;
 import static com.vitech.socmcompetition.StorySubmitActivity.NAV_STATE.NAV_RULES_AND_REGULATIONS;
@@ -92,18 +90,18 @@ enum FLAG_PAYMENT{
 enum PAYMENT_TARGET{
     TARGET_TEST,TARGET_RELEASE,TARGET_PAYMENT_TEST;
 }
-PAYMENT_TARGET target = PAYMENT_TARGET.TARGET_TEST;
+PAYMENT_TARGET target = PAYMENT_TARGET.TARGET_RELEASE;
 FLAG_PAYMENT flag_payment = FLAG_PAYMENT.BEFORE_PAYMENT;
     public class Story{
 
-String reference;
+        String reference;
         String story_id;
         String transaction_id;
         String submission_status;
         String transaction_status;
         String order_id;
         String payment_id;
-String title;
+        String title;
         String content;
 
 
@@ -185,9 +183,9 @@ String title;
         writeStory = findViewById(R.id.write_story_view);
         storyTitle = (EditText)findViewById(R.id.story_title);
         storyContent = editor;
-mainPager = (NoTouchPager)findViewById(R.id.main_pager);
- adapter = new MainPageAdapter(getSupportFragmentManager());
-  mainPager.setAdapter(adapter);
+        mainPager = (NoTouchPager)findViewById(R.id.main_pager);
+        adapter = new MainPageAdapter(getSupportFragmentManager());
+        mainPager.setAdapter(adapter);
         next = (Button)findViewById(R.id.button);
 
         payStatView = (ImageView)findViewById(R.id.pay_stat);
@@ -210,7 +208,7 @@ mainPager = (NoTouchPager)findViewById(R.id.main_pager);
                     });
                 }
                 else {
-                   prompt.setMessage("Write atleast 100 words").show();
+                   prompt.setMessage("Write at least 100 words").show();
 
                 }
             }
@@ -220,10 +218,13 @@ mainPager = (NoTouchPager)findViewById(R.id.main_pager);
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
+                setTitle("Registration");
                 mainPager.setCurrentItem(1);
                 next.setVisibility(View.VISIBLE);
             }
         },2000);
+
+
 
         next.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -231,13 +232,16 @@ mainPager = (NoTouchPager)findViewById(R.id.main_pager);
                 switch (currentNav){
                     case NAV_USER_DETAILS:if(verifyUserInput()){
                         mainPager.setCurrentItem(2,true);
+                        setTitle("Terms and Conditions");
+                        next.setText("Agree");
                         currentNav = NAV_T_AND_C;
-                                            }else {
+
+                    }else{
                         prompt.setMessage("Invalid Details...!");
                         prompt.show();
                     }
                     break;
-                    case NAV_T_AND_C:mainPager.setCurrentItem(3,true);currentNav = NAV_RULES_AND_REGULATIONS;next.setText("Next");break;
+                    case NAV_T_AND_C:mainPager.setCurrentItem(3,true);setTitle("Rules and Regulations");currentNav = NAV_RULES_AND_REGULATIONS;next.setText("I Know");break;
                     case NAV_RULES_AND_REGULATIONS:hidePagerAndShowStorySubmit();next.setText("Submit");currentNav = NAV_STORY;break;
                     case NAV_STORY:createStory();break;
                     case NAV_RETRY:retryDatabaseInsert(underSubmission);break;
@@ -258,7 +262,7 @@ mainPager = (NoTouchPager)findViewById(R.id.main_pager);
         else {
 
             uname = fragment.name.getText().toString();
-umail = fragment.email.getText().toString();
+            umail = fragment.email.getText().toString();
             uref = fragment.reference.getText().toString();
             uphone = fragment.phone.getText().toString();
             college = fragment.college.getText().toString();
@@ -278,7 +282,8 @@ else{
         return EmailValidator.getInstance().isValid(email);
     }
     void hidePagerAndShowStorySubmit(){
-
+        setTitle("Story");
+        next.setText("Submit");
         Animation hideUp = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.hide_up);
         Animation showUp = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.show_up);
         hideUp.setDuration(700);
@@ -415,9 +420,10 @@ Log.d("Story",story.toMap().toString());
                     });
 
                     return;
+                }else {
+                    underSubmission = story;
+                    startPreCreatedUI(order);
                 }
-               underSubmission = story;
-                startPreCreatedUI(order);
             }
         });
 
@@ -558,7 +564,6 @@ if(response.code()==200){
 
 }
 else {
-
     paymentSuccessButDatabaseError(new Exception(),story);
 }
     }
@@ -578,6 +583,7 @@ class PaymentSuccessButInsertionErrorException extends Exception{
 
 void showSuccessFull(){
     paymentDialog.cancel();
+    setTitle("Stories of Common Man");
     writeStory.setVisibility(View.GONE);
     findViewById(R.id.final_view).setVisibility(View.VISIBLE);
     next.setVisibility(View.VISIBLE);
@@ -625,9 +631,7 @@ void retryDatabaseInsert(final Story story){
 
                     }
                 });
-
             } else {
-
                 handleException(new PaymentSuccessButInsertionErrorException(story));
             }
         }
@@ -699,10 +703,15 @@ void handleException(final  Exception e){
                 handleException(new NoInternetException());
                 return;
             }
+
             else {
-                Toast.makeText(getApplicationContext(),"UnKnown Error Occcurred",Toast.LENGTH_LONG).show();
-                OnPaymentCancelled();
+                e.printStackTrace();
                 FirebaseCrash.report(e);
+                Toast.makeText(getApplicationContext(),"UnKnown Error Occcurred",Toast.LENGTH_LONG).show();
+                switch (flag_payment){
+                    case AFTER_PAYMENT:OnPaymentCancelled();
+
+                }
                 return;
             }
 
@@ -808,7 +817,7 @@ StoryObtainedListener listener;
         paymentDialog.show();
 
         RequestBody body = RequestBody.create(JSON,buildPost(story.title,story.content,uname+","+umail,story.story_id));
-        okhttp3.Request post = new okhttp3.Request.Builder().addHeader("Authorization", " Basic c3Rvcmllc29mY29tbW9ubWFuOndldHQgY1RpeCBDQkpaIFVrTUkgRGRVNiBINkNG").addHeader("Content-Type","application/json").url("http://storiesofcommonman.azurewebsites.net/wp-json/wp/v2/posts").post(body).build();
+        okhttp3.Request post = new okhttp3.Request.Builder().addHeader("Authorization", " Basic c3Rvcmllc29mY29tbW9ubWFuOndldHQgY1RpeCBDQkpaIFVrTUkgRGRVNiBINkNG").addHeader("Content-Type","application/json").url("http://"+getResources().getString(R.string.site_ip)+"/wp-json/wp/v2/posts").post(body).build();
 
         client.newCall(post).enqueue(new Callback() {
             @Override
@@ -822,7 +831,13 @@ if(response.code()== HttpURLConnection.HTTP_CREATED){
 
     submitStory(story);
 
-}}
+}
+            else {
+    Log.d("Code Error",response.code()+"");
+    onFailure(call,new IOException());
+            }
+
+            }
         });
     }
   String buildPost(String title,String data,String author,String id){

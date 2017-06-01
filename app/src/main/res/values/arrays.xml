@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="terms_conditions">
+        <item>1. My participation in this  competition held by stories of common man is voluntary .</item>
+        <item>2. I understand that Storiesofcommonman.in reserves all the rights over the material submitted for the competition.</item>
+        <item>3. I understand that the money once paid would not be refunded at any cost</item>
+        <item>4. Every thing submitted for the competition is completely legit and free from all legal obligations</item>
+
+
+    </string-array>
+    <string-array name="rules_regulations">
+        <item>⁠⁠⁠⁠⁠1. No plagiarism will be entertained , if found your entry would be disqualified for the competition</item>
+        <item>2. Your name on the certificate would be the same as that of the one you applied with, no changes will be made</item>
+
+        <item>⁠⁠⁠⁠⁠3. For tech support or app crash please consult your campus ambassador immediately</item>
+        <item>4. For all queries you can contact ur campus ambassador and   we are available on writetous@storiesofcommonman.in </item>
+        <item>5. All decisions made by storiesofcommonman.in are final and the winners would be announced later .</item>
+
+
+    </string-array>
+
+
+</resources>
